@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard | AGC Bus Tracking</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --primary-blue: #1e40af;
+      --accent-gold: #fbbf24;
+      --light-gray: #f8fafc;
+      --dark-text: #1f2937;
+      --success-green: #10b981;
+      --danger-red: #ef4444;
+      --nav-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--light-gray);
+      color: var(--dark-text);
+      min-height: 100vh;
+    }
+    
+    /* Navbar Styling */
+    .admin-navbar {
+      background: var(--nav-gradient);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 0.8rem 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .admin-navbar.scrolled {
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .navbar-brand {
+      font-weight: 700;
+      color: white !important;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.3s ease;
+    }
+    
+    .navbar-brand:hover {
+      transform: translateX(5px);
+    }
+    
+    .navbar-brand i {
+      font-size: 1.5rem;
+      color: var(--accent-gold);
+    }
+    
+    .nav-link {
+      color: rgba(255, 255, 255, 0.85) !important;
+      font-weight: 500;
+      padding: 0.5rem 1rem !important;
+      margin: 0 0.2rem;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+      color: white !important;
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 3px;
+      background: var(--accent-gold);
+      border-radius: 3px;
+    }
+    
+    .btn-nav {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-nav:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: white;
+      transform: translateY(-2px);
+    }
+    
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--danger-red) !important;
+    }
+    
+    .btn-logout:hover {
+      background: var(--danger-red) !important;
+    }
+    
+    /* Dashboard Container */
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+     /* Tabs */
+     .nav-pills {
+       background: var(--nav-gradient); /* Use the gradient from :root */
+       border-radius: 12px;
+       padding: 10px;
+       box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+       border: 1px solid rgba(0,0,0,0.05);
+     }
+     
+     .nav-pills .nav-link {
+       color: white; /* Better contrast against the gradient background */
+       font-weight: 500;
+       border-radius: 8px;
+       padding: 10px 20px;
+       transition: all 0.3s;
+       margin: 0 5px;
+       background-color: transparent; /* Makes the link blend in */
+     }
+     
+     .nav-pills .nav-link.active {
+       background-color: var(--accent-gold); /* Highlight active tab with gold */
+       color: var(--dark-text); /* Dark text on light gold background */
+       box-shadow: 0 4px 10px rgba(30, 64, 175, 0.2);
+     }
+     
+     .nav-pills .nav-link:not(.active):hover {
+       background-color: rgba(255, 255, 255, 0.15); /* Subtle hover effect */
+     }
+     
+    /* Tab Content */
+    .tab-content {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-top: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      min-height: 300px;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .tab-pane { 
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .tab-pane.active { 
+      display: block; 
+    }
+    
+    /* Table Styles */
+    .custom-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    
+    .custom-table thead th {
+      background-color: var(--primary-blue) !important;
+      color: white !important;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      padding: 1rem;
+      font-weight: 600;
+    }
+    
+    .table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border-radius: 8px;
+    }
+    
+    .custom-table tbody tr:hover {
+      background-color: rgba(30, 64, 175, 0.05) !important;
+    }
+    
+    .custom-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: middle;
+    }
+    
+    /* Search Box */
+    .search-box {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+    
+    .search-box input {
+      padding-left: 40px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      transition: all 0.3s ease;
+    }
+    
+    .search-box input:focus {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    /* Buttons */
+    .btn-primary {
+      background-color: var(--primary-blue);
+      border: none;
+      padding: 10px 20px;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(30, 64, 175, 0.2);
+    }
+    
+    .btn-primary:hover {
+      background-color: #1e3a8a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+    }
+    
+    /* Feature Cards */
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      height: 100%;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    /* Badges */
+    .badge {
+      font-weight: 500;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+    }
+    .badge-status {
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+  }
+
+  .badge-on-time {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: var(--success-green);
+  }
+
+  .badge-delayed {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--danger-red);
+  }
+  .map-container {
+    height: 400px;
+    background-color: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-pills {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 8px;
+      }
+      
+      .nav-pills .nav-link {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+      }
+      
+      .tab-content {
+        padding: 15px;
+      }
+    }
+    
+    /* Floating action button */
+    .fab {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary-blue);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.3s ease;
+      animation: pulse 2s infinite;
+    }
+    
+    .fab:hover {
+      transform: scale(1.1) translateY(-5px);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(30, 64, 175, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark admin-navbar sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-bus"></i>
+        <span>AGC Bus Admin</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+          aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="adminNavbar">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                    <!-- Search Form -->
+        {% comment %} <li class="nav-item">
+          <form method="GET" action="{% url 'search_bus' %}" class="d-flex ms-2">
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search stop..." value="{{ search_query }}">
+            <button class="btn btn-outline-light btn-sm ms-2" type="submit">
+              <i class="fas fa-search"></i> Search
+            </button>
+          </form>
+        </li> {% endcomment %}
+
+        {% comment %} <li class="nav-item">
+          <a class="nav-link " href="{% url 'search_bus' %}" >
+              <i class="fas fa-tachometer-alt me-1"></i> Search
+          </a>
+      </li> {% endcomment %}
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'admin_dashboard' %}">
+                      <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'manage_buses' %}">
+                      <i class="fas fa-bus me-1"></i> Buses
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'manage_drivers' %}">
+                      <i class="fas fa-id-badge me-1"></i> Drivers
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'manage_routes' %}">
+                      <i class="fas fa-route me-1"></i> Routes
+                  </a>
+              </li>
+              <li class="nav-item ms-lg-2">
+                  <a class="btn btn-sm btn-nav btn-logout" href="{% url 'admin_logout' %}">
+                      <i class="fas fa-sign-out-alt me-1"></i> Logout
+                  </a>
+              </li>
+          </ul>
+      </div>
+    </div>
+  </nav>
+   
+<!-- Dashboard Content -->
+<div class="dashboard-container">
+  <!-- Tabs -->
+  <ul class="nav nav-pills mb-4" id="dashboardTabs">
+    <li class="nav-item">
+      <button class="nav-link active" data-tab="buses">
+        <i class="fas fa-bus me-2"></i>Manage Buses
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-tab="drivers">
+        <i class="fas fa-user-tie me-2"></i>Assign Drivers
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-tab="routes">
+        <i class="fas fa-route me-2"></i>Define Routes
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-tab="tracking">
+        <i class="fas fa-map-marked-alt me-2"></i>Live Tracking
+      </button>
+    </li>
+  </ul>
+  
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Buses Tab -->
+    <div id="buses" class="tab-pane active">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="mb-1"><i class="fas fa-bus text-primary me-2"></i>Manage Buses</h3>
+          <p class="text-muted">Add, update, or remove buses from the fleet</p>
+        </div>
+        <a href="{% url 'manage_buses' %}" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i>Add New Bus
+        </a>
+      </div>
+      
+      <div class="row mb-4">
+        <div class="col-md-6">
+          {% comment %} <div class="search-box">
+            <i class="fas fa-search"></i>
+            <form method="GET" action="{% url 'admin_dashboard' %}">
+              <input type="text" name="search" id="searchInput" class="form-control" placeholder="Search buses by number, driver, or route..." value="{{ request.GET.search }}">
+            </form>
+          </div> {% endcomment %}
+        </div>
+      </div>
+      
+      <!-- Bus List Table -->
+      <div class="table-container">
+        <table class="table custom-table">
+          <thead>
+            <tr>
+              <th>Bus Number</th>
+              <th>Capacity</th>
+              <th>Driver</th>
+              <th>Route</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bus in buses %}
+            <tr>
+              <td>{{ bus.bus_number }}</td>
+              <td>{{ bus.capacity }}</td>
+              <td>{{ bus.driver.name }}</td>
+              <td>{{ bus.route.name }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div> 
+
+    <!-- Drivers Tab -->
+    <div id="drivers" class="tab-pane">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="mb-1"><i class="fas fa-user-tie text-primary me-2"></i>Assign Drivers</h3>
+          <p class="text-muted">Manage driver assignments to specific buses</p>
+        </div>
+        <a href="{% url 'manage_drivers' %}" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i>Assign Driver
+        </a>
+      </div>
+      
+      <!-- Scrollable Driver List -->
+      <div class="table-container">
+        <table class="table custom-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Contact Number</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for driver in drivers %}
+            <tr>
+              <td>{{ driver.id }}</td>
+              <td>{{ driver.name }}</td>
+              <td>{{ driver.contact_number }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="text-center">No drivers available.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Routes Tab -->
+    <div id="routes" class="tab-pane">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="mb-1"><i class="fas fa-route text-primary me-2"></i>Define Routes</h3>
+          <p class="text-muted">Set bus stops and timings for each route</p>
+        </div>
+        <a href="{% url 'manage_routes' %}" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i>Add New Route
+        </a>
+      </div>
+      
+      <!-- Scrollable Route List -->
+      <div class="table-container">
+        <table class="table custom-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Route Name</th>
+              <th>Coordinates</th>
+              <th>Stops with Timings</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for route in routes %}
+            <tr>
+              <td>{{ route.id }}</td>
+              <td>{{ route.name }}</td>
+              
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                      {% for stop, timing, lat, lng in route.get_stops_with_timings %}
+                      <div class="stop-item">
+                          <span class="fw-medium">{{ stop }}</span> - 
+                          <span class="text-muted">{{ timing }}</span> -
+                          <span class="text-muted">Lat: {{ lat|floatformat:6 }}</span> -
+                          <span class="text-muted">Lng: {{ lng|floatformat:6 }}</span>
+                      </div>
+                      {% endfor %}
+                  </div>
+        
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center">No routes available.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    
+
+ <!-- Tracking Tab -->
+<div id="tracking" class="tab-pane">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="mb-1"><i class="fas fa-map-marked-alt text-primary me-2"></i>Live Tracking</h3>
+        <p class="text-muted">Monitor real-time bus locations</p>
+      </div>
+      <button class="btn btn-primary" onclick="fetchBusLocation()">
+        <i class="fas fa-sync-alt me-2"></i>Refresh Map
+      </button>
+    </div>
+
+    <div class="row">
+      <!-- Map Section -->
+      <div class="col-lg-8 mb-4">
+        <div class="feature-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5><i class="fas fa-map me-2"></i>Live Bus Map</h5>
+          </div>
+          <div class="map-container" id="map">
+            <!-- Google Map will be embedded here -->
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Google Maps Script -->
+<script>
+    let map;
+    let markers = [];
+
+    async function initMap() {
+        const defaultCenter = { lat: 31.634, lng: 74.872 };
+        map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 15,
+            center: defaultCenter,
+        });
+
+        await loadBuses();
+    }
+
+    async function loadBuses() {
+        const response = await fetch('/api/buses/');
+        const buses = await response.json();
+
+        // Clear old markers
+        markers.forEach(marker => marker.setMap(null));
+        markers = [];
+
+        buses.forEach(bus => {
+            const marker = new google.maps.Marker({
+                position: { lat: bus.lat, lng: bus.lng },
+                map: map,
+                title: `Bus #${bus.bus_number} - ${bus.route_name}`,
+                icon: {
+                    url: `https://maps.google.com/mapfiles/ms/icons/${bus.status === "on-time" ? "green" : "red"}-dot.png`
+                }
+            });
+            markers.push(marker);
+        });
+
+        console.log("Loaded buses:", buses);
+    }
+    
+    function fetchBusLocation() {
+      fetch('http://192.168.173.91:8000/save_location/')  // Example API endpoint, replace with actual
+          .then(response => response.json())
+          .then(data => {
+              const busLocation = { lat: data.latitude, lng: data.longitude };
+
+              // Check if the marker already exists
+              if (marker) {
+                  // Update the position of the existing marker
+                  marker.setPosition(busLocation);
+              } else {
+                  // If no marker exists, create one
+                  marker = new google.maps.Marker({
+                      position: busLocation,
+                      map: map,
+                      title: 'Bus Location',
+                      icon: {
+                          url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                      }
+                  });
+              }
+              // Center the map on the bus
+              map.setCenter(busLocation);
+          })
+          .catch(error => console.error('Error fetching bus location:', error));
+  }
+    async function loadNotifications() {
+        const response = await fetch('/api/notifications/');
+        const notifications = await response.json();
+
+        const listGroup = document.getElementById('bus-info');
+        listGroup.innerHTML = ""; // Clear previous notifications
+
+        notifications.forEach(notification => {
+            const item = `
+                <div class="list-group-item border-0 py-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="mb-1">${notification.message}</h6>
+                            <small class="text-muted">${notification.details}</small>
+                        </div>
+                        <small class="text-muted">${notification.time}</small>
+                    </div>
+                </div>
+            `;
+            listGroup.innerHTML += item;
+        });
+    }
+
+    window.addEventListener('load', () => {
+        initMap();
+        loadNotifications();
+    });
+</script>
+
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.admin-navbar');
+    if (window.scrollY > 10) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  });
+
+   // Tab switching
+  document.querySelectorAll('#dashboardTabs .nav-link').forEach(tab => {
+    tab.addEventListener('click', function () {
+      // Remove active class from all tabs and panes
+      document.querySelectorAll('#dashboardTabs .nav-link').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+  
+      // Add active to the clicked tab and corresponding pane
+      this.classList.add('active');
+      const target = this.getAttribute('data-tab');
+      document.getElementById(target).classList.add('active');
+    });
+  }); 
+  // Get all the tab links and tab content
+
+</script>
+<!-- Load Google Maps API (put your actual API key) -->
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJGkhfiacFw9EsXGM4QdKejnp5J3i8D4w&callback=initMap" async defer></script>
+ 
+</body>
+</html>

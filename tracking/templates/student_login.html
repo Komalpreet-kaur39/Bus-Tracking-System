@@ -1,0 +1,539 @@
+{% comment %} {% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <h3 class="text-center">Signup</h3>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password1" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password1" name="password1" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password2" class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" id="password2" name="password2" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Sign Up</button>
+            </form>
+            <p class="mt-3 text-center">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %} {% endcomment %}
+
+{% comment %} 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0044cc, #ff0000);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .login-container {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-container h3 {
+            color: #0044cc;
+            text-align: center;
+        }
+        .btn-custom {
+            background-color: #ff0000;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-custom:hover {
+            background-color: #cc0000;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h3>Student Login</h3>
+
+        <!-- Display Django error messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger text-center" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="" onsubmit="return validateForm()">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <small id="emailError" class="error-message"></small>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+                <small id="passwordError" class="error-message"></small>
+            </div>
+            <button type="submit" class="btn btn-custom w-100">Login</button>
+        </form>
+
+        <p class="mt-3 text-center">Forgot your password? <a href="#" style="color:#0044cc;">Reset here</a></p>
+        <p class="text-center">Don't have an account? <a href="{% url 'student_signup' %}" style="color:#0044cc;">Sign Up</a></p>
+    </div>
+
+    <script>
+        function validateForm() {
+            let valid = true;
+            let email = document.getElementById("email").value.trim();
+            let password = document.getElementById("password").value.trim();
+
+            document.getElementById("emailError").textContent = "";
+            document.getElementById("passwordError").textContent = "";
+
+            let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailPattern.test(email)) {
+                document.getElementById("emailError").textContent = "❌ Enter a valid email address.";
+                valid = false;
+            }
+            if (password.length < 6) {
+                document.getElementById("passwordError").textContent = "❌ Password must be at least 6 characters.";
+                valid = false;
+            }
+
+            return valid;
+        }
+    </script>
+</body>
+</html>  {% endcomment %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% comment %} <style> {% endcomment %}
+     <style>
+        :root {
+            --primary-blue: #1d4ed8;
+            --secondary-red: #dc2626;
+            --accent-gold: #f59e0b;
+            --dark-text: #1e293b;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        /* Blue Navbar (Fixed) */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background-color: var(--primary-blue);
+            color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        
+        .nav-items {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .home-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        
+        .home-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Animated Background */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0c2d6b, #1d4ed8);
+            opacity: 0.9;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: floatUp 15s infinite linear;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+        }
+        
+        /* Login Container */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 80px 20px 20px;
+        }
+        
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--dark-text);
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 420px;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.3s forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--accent-gold));
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .login-header h3 {
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header i {
+            font-size: 2.5rem;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+        
+        .form-control {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+            margin-bottom: 5px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.25rem rgba(29, 78, 216, 0.2);
+        }
+        
+        .btn-login {
+            background-color: var(--accent-gold);
+            color: var(--dark-text);
+            font-weight: 600;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-login:hover {
+            background-color: #e69008;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .error-message {
+            color: var(--secondary-red);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        
+        .alert {
+            border-radius: 8px;
+        }
+        
+        .login-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .login-footer a {
+            color: var(--primary-blue);
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .login-footer a:hover {
+            color: #0c2d6b;
+            text-decoration: underline;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .login-container {
+                padding: 1.5rem;
+            }
+            
+            .navbar {
+                padding: 12px 5%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Blue Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-bus logo-icon"></i>
+            <span class="logo-text">AGC Bus Tracking</span>
+        </div>
+        <div class="nav-items">
+            <a href="/" class="home-link">Home</a>
+        </div>
+    </nav>
+
+    <!-- Animated Background -->
+    <div class="background-container">
+        <div class="background"></div>
+        <!-- Bubble elements will be added by JS -->
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-wrapper">
+        <div class="login-container animate__animated">
+            <div class="login-header">
+                <i class="fas fa-user-graduate"></i>
+                <h3>Student Login</h3>
+            </div>
+
+            <!-- Display Django error messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger animate__animated animate__shakeX" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" action="" onsubmit="return validateForm()">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                    <small id="emailError" class="error-message"></small>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-color: #ddd;">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <small id="passwordError" class="error-message"></small>
+                </div>
+                <button type="submit" class="btn btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p class="mt-3">Forgot your password? <a href="#">Reset here</a></p>
+                <p>Don't have an account? <a href="{% url 'student_signup' %}">Sign Up</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create background bubbles
+        function createBubbles() {
+            const container = document.querySelector('.background-container');
+            const bubbleCount = 15;
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('bubble');
+                
+                // Random size between 50px and 150px
+                const size = Math.random() * 100 + 50;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                
+                // Random position
+                bubble.style.left = `${Math.random() * 100}%`;
+                
+                // Random animation duration between 10s and 20s
+                const duration = Math.random() * 10 + 15;
+                bubble.style.animationDuration = `${duration}s`;
+                
+                // Random delay
+                bubble.style.animationDelay = `${Math.random() * 5}s`;
+                
+                container.appendChild(bubble);
+            }
+        }
+        
+        // Run on page load
+        window.addEventListener('load', () => {
+            createBubbles();
+            
+            // Add shake animation to error fields
+            const emailField = document.getElementById('email');
+            const passwordField = document.getElementById('password');
+            
+            if (emailField.value === '') {
+                emailField.focus();
+            }
+        });
+        
+        // Form validation
+        function validateForm() {
+            let valid = true;
+            let email = document.getElementById("email").value.trim();
+            let password = document.getElementById("password").value.trim();
+
+            document.getElementById("emailError").textContent = "";
+            document.getElementById("passwordError").textContent = "";
+
+            let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailPattern.test(email)) {
+                document.getElementById("emailError").textContent = "Please enter a valid email address";
+                document.getElementById("email").classList.add('animate__animated', 'animate__shakeX');
+                setTimeout(() => {
+                    document.getElementById("email").classList.remove('animate__animated', 'animate__shakeX');
+                }, 1000);
+                valid = false;
+            }
+            if (password.length < 6) {
+                document.getElementById("passwordError").textContent = "Password must be at least 6 characters";
+                document.getElementById("password").classList.add('animate__animated', 'animate__shakeX');
+                setTimeout(() => {
+                    document.getElementById("password").classList.remove('animate__animated', 'animate__shakeX');
+                }, 1000);
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const password = document.getElementById('password');
+            const icon = this.querySelector('i');
+            if (password.type === 'password') {
+                password.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                password.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+    </script>
+</body>
+</html> 
+

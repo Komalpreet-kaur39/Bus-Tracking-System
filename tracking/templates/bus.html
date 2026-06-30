@@ -1,0 +1,1341 @@
+{% comment %} 
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage Buses</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0f4f8;
+    }
+    .card-header {
+      background-color: #0d6efd;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    .btn-icon {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #eef5ff;
+    }
+    .section-title {
+      font-weight: 600;
+      color: #0d6efd;
+    }
+    .form-label {
+      font-weight: 500;
+      color: #495057;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-4">
+    <span class="navbar-brand fw-bold">🚌 Transport Admin</span>
+  </nav>
+
+  <!-- Container -->
+  <div class="container mt-5 mb-5">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="section-title mb-1">Manage Buses</h2>
+        <p class="text-muted mb-0">Add, update or remove buses from the fleet</p>
+      </div>
+    </div>
+
+    <!-- Add/Edit Form -->
+    <div class="card shadow-sm mb-5">
+      <div class="card-header">
+        {% if form.instance.pk %}
+          ✏️ Edit Bus - {{ form.instance.bus_number }}
+        {% else %}
+          ➕ Add New Bus
+        {% endif %}
+      </div>
+      <div class="card-body bg-white">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="row g-4">
+            <div class="col-md-3">
+              <label class="form-label">Bus Number</label>
+              {{ form.bus_number }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Capacity</label>
+              {{ form.capacity }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Route</label>
+              {{ form.route }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Driver</label>
+              {{ form.driver }}
+            </div>
+          </div>
+          <div class="mt-4 d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-success btn-icon">
+              {% if form.instance.pk %}
+                💾 Update
+              {% else %}
+                ✅ Save
+              {% endif %}
+            </button>
+            <a href="{% url 'bus' %}" class="btn btn-outline-secondary btn-icon">↩️ Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bus Table -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">📋 All Registered Buses</div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle m-0">
+          <thead class="table-light">
+            <tr class="text-center">
+              <th>ID</th>
+              <th>Bus Number</th>
+              <th>Capacity</th>
+              <th>Route</th>
+              <th>Driver</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bus in buses %}
+            <tr class="text-center">
+              <td>{{ bus.id }}</td>
+              <td>{{ bus.bus_number }}</td>
+              <td>{{ bus.capacity }}</td>
+              <td>{{ bus.route.name }}</td>
+              <td>{{ bus.driver.name|default:"—" }}</td>
+              <td>
+                <a href="{% url 'manage_buses' %}?edit={{ bus.id }}" class="btn btn-sm btn-outline-primary btn-icon">
+                  ✏️ Edit
+                </a>
+                <form method="POST" action="{% url 'manage_buses' %}?delete={{ bus.id }}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" onclick="return confirm('Are you sure?')">🗑️ Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                <em>No buses found in the system. Start by adding one above!</em>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bootstrap Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> {% endcomment %}
+
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Buses</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script>
+        function editBus(id, number, capacity, driver, route) {
+            document.getElementById('bus_id').value = id;
+            document.getElementById('bus_number').value = number;
+            document.getElementById('capacity').value = capacity;
+            document.getElementById('driver').value = driver;
+            document.getElementById('route').value = route;
+            document.getElementById('submitBtn').innerText = "Update Bus";
+        }
+
+        function clearForm() {
+            document.getElementById('bus_id').value = "";
+            document.getElementById('bus_number').value = "";
+            document.getElementById('capacity').value = "";
+            document.getElementById('driver').value = "";
+            document.getElementById('route').value = "";
+            document.getElementById('submitBtn').innerText = "Add Bus";
+        }
+    </script>
+
+    <style>
+        .custom-blue {
+            background-color: #0d6efd !important; /* Matches save button color */
+        }
+        .form-container {
+            max-width: 500px;  /* Adjusted width */
+            margin: auto;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark custom-blue">
+        <div class="container">
+            <a class="navbar-brand" href="#">Bus Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Routes</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Buses</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Manage Buses</h2>
+
+        <!-- Bus Form -->
+        <div class="card shadow p-4 form-container">
+            <h4 class="mb-3 text-center">Add / Edit Bus</h4>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="bus_id" id="bus_id">
+
+                <div class="mb-3">
+                    <label class="form-label">Bus Number:</label>
+                    <input type="text" class="form-control" name="bus_number" id="bus_number" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Capacity:</label>
+                    <input type="number" class="form-control" name="capacity" id="capacity" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Driver:</label>
+                    <select class="form-control" name="driver" id="driver" required>
+                        <option value="">Select Driver</option>
+                        {% for driver in drivers %}
+                        <option value="{{ driver.id }}">{{ driver.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Route:</label>
+                    <select class="form-control" name="route" id="route" required>
+                        <option value="">Select Route</option>
+                        {% for route in routes %}
+                        <option value="{{ route.id }}">{{ route.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" id="submitBtn">Add Bus</button>
+                <button type="button" class="btn btn-secondary w-100 mt-2" onclick="clearForm()">Reset</button>
+            </form>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Bus List Table -->
+        <h3 class="text-center mb-3">Bus List</h3>
+        <div class="card shadow p-4">
+            <table class="table table-bordered table-striped text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Bus Number</th>
+                        <th>Capacity</th>
+                        <th>Driver</th>
+                        <th>Route</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bus in buses %}
+                    <tr>
+                        <td>{{ bus.bus_number }}</td>
+                        <td>{{ bus.capacity }}</td>
+                        <td>{{ bus.driver.name }}</td>
+                        <td>{{ bus.route.name }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" 
+                                    onclick="editBus('{{ bus.id }}', '{{ bus.bus_number }}', '{{ bus.capacity }}', '{{ bus.driver.id }}', '{{ bus.route.id }}')">
+                                Edit
+                            </button>
+                            <a href="?delete={{ bus.id }}" class="btn btn-sm btn-danger"
+   onclick="return confirm('Are you sure you want to delete this bus?');">
+    Delete
+</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html> {% endcomment %}
+{% comment %}  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Buses | AGC Bus Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #1d4ed8;
+            --accent-gold: #f59e0b;
+            --light-gray: #f8fafc;
+            --dark-text: #1e293b;
+        }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--light-gray);
+        }
+        
+        /* Navbar */
+        .admin-navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 3px solid var(--primary-blue);
+        }
+        
+        .admin-navbar .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Main Container */
+        .bus-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        /* Form Card */
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid var(--accent-gold);
+        }
+        
+        /* Table Card */
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid var(--primary-blue);
+        }
+        
+        /* Buttons */
+        .btn-bus-primary {
+            background-color: var(--primary-blue);
+            border: none;
+            font-weight: 500;
+        }
+        
+        .btn-bus-primary:hover {
+            background-color: #1a4396;
+        }
+        
+        /* Table Styling */
+        .bus-table th {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        .bus-table tr:hover {
+            background-color: rgba(29, 78, 216, 0.05);
+        }
+        
+        /* Form Elements */
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(29,78,216,0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light admin-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bus"></i>
+                <span>AGC Bus Admin</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-sm btn-outline-secondary me-2">
+                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                </a>
+                <a href="#" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="bus-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0"><i class="fas fa-bus me-2"></i>Bus Management</h3>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearForm()">
+                    <i class="fas fa-plus me-1"></i>New Bus
+                </button>
+            </div>
+        </div>
+        
+        <!-- Bus Form -->
+        <div class="card form-card p-4 mb-4">
+            <h5 class="mb-3"><i class="fas fa-edit me-2"></i>Bus Information</h5>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="bus_id" id="bus_id">
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Bus Number</label>
+                        <input type="text" class="form-control" name="bus_number" id="bus_number" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Capacity</label>
+                        <input type="number" class="form-control" name="capacity" id="capacity" required>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Driver</label>
+                        <select class="form-select" name="driver" id="driver" required>
+                            <option value="">Select Driver</option>
+                            {% for driver in drivers %}
+                            <option value="{{ driver.id }}">{{ driver.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Route</label>
+                        <select class="form-select" name="route" id="route" required>
+                            <option value="">Select Route</option>
+                            {% for route in routes %}
+                            <option value="{{ route.id }}">{{ route.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-bus-primary" id="submitBtn">
+                        <i class="fas fa-save me-1"></i>Add Bus
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Bus List -->
+        <div class="card table-card p-4">
+            <h5 class="mb-3"><i class="fas fa-list me-2"></i>Bus Fleet</h5>
+            <div class="table-responsive">
+                <table class="table bus-table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Bus Number</th>
+                            <th>Capacity</th>
+                            <th>Driver</th>
+                            <th>Route</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bus in buses %}
+                        <tr>
+                            <td>{{ bus.bus_number }}</td>
+                            <td>{{ bus.capacity }}</td>
+                            <td>{{ bus.driver.name }}</td>
+                            <td>{{ bus.route.name }}</td>
+                            <td>
+                                <span class="badge bg-success">Active</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="editBus('{{ bus.id }}', '{{ bus.bus_number }}', '{{ bus.capacity }}', '{{ bus.driver.id }}', '{{ bus.route.id }}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <a href="?delete={{ bus.id }}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Are you sure you want to delete this bus?');">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function editBus(id, number, capacity, driver, route) {
+            document.getElementById('bus_id').value = id;
+            document.getElementById('bus_number').value = number;
+            document.getElementById('capacity').value = capacity;
+            document.getElementById('driver').value = driver;
+            document.getElementById('route').value = route;
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-1"></i>Update Bus';
+            
+            // Scroll to form
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function clearForm() {
+            document.getElementById('bus_id').value = "";
+            document.getElementById('bus_number').value = "";
+            document.getElementById('capacity').value = "";
+            document.getElementById('driver').value = "";
+            document.getElementById('route').value = "";
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-1"></i>Add Bus';
+        }
+    </script>
+</body>
+ </html> {% endcomment %}
+
+{% comment %}  
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Buses | AGC Bus Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #1e40af; /* Dark Blue */
+            --accent-gold: #fbbf24; /* Gold Accent */
+            --light-gray: #f3f4f6; /* Light Gray */
+            --dark-text: #1f2937; /* Dark Text */
+            --accent-orange: #f59e0b;
+        
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--light-gray);
+        }
+        
+        /* Navbar */
+    
+        
+        /* Navbar */
+.admin-navbar {
+    background: linear-gradient(90deg, var(--primary-blue), #2563eb); /* Blue gradient */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-bottom: none;
+    transition: background 0.3s ease;
+}
+
+.admin-navbar .navbar-brand {
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Navbar Links and Buttons */
+.admin-navbar .nav-link,
+.admin-navbar .btn {
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.admin-navbar .nav-link:hover,
+.admin-navbar .btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+    color: #ffe082 !important; /* Gold on hover */
+}
+
+.admin-navbar .btn-outline-secondary,
+.admin-navbar .btn-outline-danger {
+    border-color: transparent;
+}
+
+.admin-navbar .btn-outline-danger:hover {
+    background-color: #ef4444;
+    color: white;
+}
+
+        /* Main Container */
+        .bus-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        /* Form Card */
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid var(--accent-gold);
+        }
+        
+        /* Table Card */
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 3px solid var(--primary-blue);
+        }
+        /* Buttons */
+        .btn-bus-primary {
+            background-color: var(--primary-blue);
+            border: none;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .btn-bus-primary:hover {
+            background-color: #1e3a8a; /* Slightly darker blue */
+        }
+        
+        /* Table Styling */
+        .bus-table th {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        .bus-table tr:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        
+        /* Form Elements */
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light admin-navbar sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-bus"></i>
+            <span>AGC Bus Admin</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+            aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold text-dark" href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold text-dark" href="{% url 'manage_buses' %}">
+                        <i class="fas fa-bus me-1"></i> Bus
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold text-dark" href="{% url 'manage_drivers' %}">
+                        <i class="fas fa-id-badge me-1"></i> Driver
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold text-dark" href="{% url 'manage_routes' %}">
+                        <i class="fas fa-route me-1"></i> Route
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-sm btn-outline-danger ms-lg-3" href="{% url 'admin_logout' %}">
+                        <i class="fas fa-sign-out-alt me-1"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+    <!-- Main Content -->
+    <div class="bus-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0"><i class="fas fa-bus me-2"></i>Bus Management</h3>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearForm()">
+                    <i class="fas fa-plus me-1"></i>New Bus
+                </button>
+            </div>
+        </div>
+        
+        <!-- Bus Form -->
+        <div class="card form-card p-4 mb-4">
+            <h5 class="mb-3"><i class="fas fa-edit me-2"></i>Bus Information</h5>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="bus_id" id="bus_id">
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Bus Number</label>
+                        <input type="text" class="form-control" name="bus_number" id="bus_number" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Capacity</label>
+                        <input type="number" class="form-control" name="capacity" id="capacity" required>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Driver</label>
+                        <select class="form-select" name="driver" id="driver" required>
+                            <option value="">Select Driver</option>
+                            {% for driver in drivers %}
+                            <option value="{{ driver.id }}">{{ driver.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Route</label>
+                        <select class="form-select" name="route" id="route" required>
+                            <option value="">Select Route</option>
+                            {% for route in routes %}
+                            <option value="{{ route.id }}">{{ route.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-bus-primary" id="submitBtn">
+                        <i class="fas fa-save me-1"></i>Add Bus
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Bus List -->
+        <div class="card table-card p-4">
+            <h5 class="mb-3"><i class="fas fa-list me-2"></i>Bus Fleet</h5>
+            <div class="table-responsive">
+                <table class="table bus-table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Bus Number</th>
+                            <th>Capacity</th>
+                            <th>Driver</th>
+                            <th>Route</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bus in buses %}
+                        <tr>
+                            <td>{{ bus.bus_number }}</td>
+                            <td>{{ bus.capacity }}</td>
+                            <td>{{ bus.driver.name }}</td>
+                            <td>{{ bus.route.name }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="editBus('{{ bus.id }}', '{{ bus.bus_number }}', '{{ bus.capacity }}', '{{ bus.driver.id }}', '{{ bus.route.id }}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <a href="?delete={{ bus.id }}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Are you sure you want to delete this bus?');">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function editBus(id, number, capacity, driver, route) {
+            document.getElementById('bus_id').value = id;
+            document.getElementById('bus_number').value = number;
+            document.getElementById('capacity').value = capacity;
+            document.getElementById('driver').value = driver;
+            document.getElementById('route').value = route;
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-1"></i>Update Bus';
+            
+            // Scroll to form
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function clearForm() {
+            document.getElementById('bus_id').value = "";
+            document.getElementById('bus_number').value = "";
+            document.getElementById('capacity').value = "";
+            document.getElementById('driver').value = "";
+            document.getElementById('route').value = "";
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-1"></i>Add Bus';
+        }
+    </script>
+</body>
+</html>
+  {% endcomment %}
+
+
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Buses | AGC Bus Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #1e40af; /* Dark Blue */
+            --accent-gold: #fbbf24; /* Gold Accent */
+            --light-gray: #f8fafc; /* Light Gray */
+            --dark-text: #1f2937; /* Dark Text */
+            --accent-orange: #f59e0b;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+            --nav-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--dark-text);
+            min-height: 100vh;
+        }
+        
+        /* Navbar Styling */
+        .admin-navbar {
+            background: var(--nav-gradient);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-navbar.scrolled {
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: translateX(5px);
+        }
+        
+        .navbar-brand i {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: var(--accent-gold);
+            border-radius: 3px;
+        }
+        
+        .btn-nav {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-nav:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger-red) !important;
+        }
+        
+        .btn-logout:hover {
+            background: var(--danger-red) !important;
+        }
+        
+        /* Main Container */
+        .bus-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Cards */
+        .form-card, .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: none;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-card {
+            border-top: 4px solid var(--accent-gold);
+        }
+        
+        .table-card {
+            border-top: 4px solid var(--primary-blue);
+        }
+        
+        .form-card:hover, .table-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Buttons */
+        .btn-bus-primary {
+            background-color: var(--primary-blue);
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(30, 64, 175, 0.2);
+        }
+        
+        .btn-bus-primary:hover {
+            background-color: #1e3a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-secondary {
+            border-color: #d1d5db;
+            color: #4b5563;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        
+        /* Table Styling */
+        .bus-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .bus-table th {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+        }
+        
+        .bus-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        
+        .bus-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .bus-table tr:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .action-btn {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-edit {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary-blue);
+        }
+        
+        .btn-edit:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--primary-blue);
+        }
+        
+        .btn-delete {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger-red);
+        }
+        
+        .btn-delete:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+        }
+        
+        /* Form Elements */
+        .form-control, .form-select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .animate-slide {
+            animation: slideIn 0.4s ease-out forwards;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .nav-link {
+                padding: 0.5rem !important;
+                margin: 0.2rem 0;
+            }
+            
+            .bus-container {
+                padding: 0 15px;
+            }
+        }
+        
+        /* Floating action button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(30, 64, 175, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bus"></i>
+                <span>AGC Bus Admin</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'manage_buses' %}">
+                            <i class="fas fa-bus me-1"></i> Buses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_drivers' %}">
+                            <i class="fas fa-id-badge me-1"></i> Drivers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_routes' %}">
+                            <i class="fas fa-route me-1"></i> Routes
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-sm btn-nav btn-logout" href="{% url 'admin_logout' %}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="bus-container">
+        <div class="d-flex justify-content-between align-items-center mb-4 animate-slide">
+            <h3 class="mb-0"><i class="fas fa-bus me-2 text-primary"></i>Bus Management</h3>
+            <div>
+                <button class="btn btn-sm btn-bus-primary" onclick="clearForm()">
+                    <i class="fas fa-plus me-1"></i>Add New Bus
+                </button>
+            </div>
+        </div>
+        
+        <!-- Bus Form -->
+        <div class="card form-card p-4 mb-4">
+            <h5 class="mb-3"><i class="fas fa-edit me-2 text-warning"></i>Bus Information</h5>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="bus_id" id="bus_id">
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Bus Number</label>
+                        <input type="text" class="form-control" name="bus_number" id="bus_number" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Capacity</label>
+                        <input type="number" class="form-control" name="capacity" id="capacity" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Driver</label>
+                        <select class="form-select" name="driver" id="driver" required>
+                            <option value="">Select Driver</option>
+                            {% for driver in drivers %}
+                            <option value="{{ driver.id }}">{{ driver.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Route</label>
+                        <select class="form-select" name="route" id="route" required>
+                            <option value="">Select Route</option>
+                            {% for route in routes %}
+                            <option value="{{ route.id }}">{{ route.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-bus-primary" id="submitBtn">
+                        <i class="fas fa-save me-1"></i>Add Bus
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Bus List -->
+        <div class="card table-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Bus Fleet</h5>
+                {% comment %} <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text bg-transparent"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search buses...">
+                </div> {% endcomment %}
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table bus-table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Bus Number</th>
+                            <th>Capacity</th>
+                            <th>Driver</th>
+                            <th>Route</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bus in buses %}
+                        <tr>
+                            <td class="fw-semibold">{{ bus.bus_number }}</td>
+                            <td>{{ bus.capacity }}</td>
+                            <td>{{ bus.driver.name }}</td>
+                            <td>{{ bus.route.name }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm action-btn btn-edit" 
+                                            onclick="editBus('{{ bus.id }}', '{{ bus.bus_number }}', '{{ bus.capacity }}', '{{ bus.driver.id }}', '{{ bus.route.id }}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <a href="?delete={{ bus.id }}" class="btn btn-sm action-btn btn-delete"
+                                       onclick="return confirm('Are you sure you want to delete this bus?');">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.admin-navbar');
+            if (window.scrollY > 10) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        function editBus(id, number, capacity, driver, route) {
+            document.getElementById('bus_id').value = id;
+            document.getElementById('bus_number').value = number;
+            document.getElementById('capacity').value = capacity;
+            document.getElementById('driver').value = driver;
+            document.getElementById('route').value = route;
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-1"></i>Update Bus';
+            
+            // Scroll to form with animation
+            document.querySelector('.form-card').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'
+            });
+            
+            // Add highlight animation
+            const formCard = document.querySelector('.form-card');
+            formCard.style.animation = 'none';
+            setTimeout(() => {
+                formCard.style.animation = 'pulse 1s';
+            }, 10);
+        }
+
+        function clearForm() {
+            document.getElementById('bus_id').value = "";
+            document.getElementById('bus_number').value = "";
+            document.getElementById('capacity').value = "";
+            document.getElementById('driver').value = "";
+            document.getElementById('route').value = "";
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save me-1"></i>Add Bus';
+            
+            // Scroll to form
+            document.querySelector('.form-card').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+    </script>
+</body>
+</html>

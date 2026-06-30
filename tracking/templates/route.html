@@ -1,0 +1,1997 @@
+{% comment %} 
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Routes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #eef2f7;
+    }
+
+    .container {
+      max-width: 900px;
+    }
+
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+    }
+
+    .form-control {
+      border-radius: 8px;
+    }
+
+    .btn-custom {
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+    }
+
+    .btn-custom:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+      border-radius: 6px;
+    }
+
+    .stop-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .table th, .table td {
+      text-align: center;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-dark bg-primary p-3">
+    <span class="navbar-brand fw-bold">🛣️ Route Manager</span>
+  </nav>
+
+  <div class="container my-5">
+    <h2 class="text-primary fw-bold text-center mb-4">Manage Routes</h2>
+
+    <div class="card mb-5">
+      <div class="card-header text-center">➕ Add/Edit Route</div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">🚏 Route Name</label>
+            <input type="hidden" name="route_id" id="route_id" />
+
+            <input type="text" name="name" class="form-control" placeholder="Enter route name" required />
+          </div>
+          
+          <label class="form-label">🕒 Stops & Timings</label>
+          <div id="stop-timing-list">
+            <div class="stop-row mb-2">
+              <input type="text" name="stops" class="form-control w-50" placeholder="Stop Name" required />
+              <input type="text" name="timings" class="form-control w-25" placeholder="Time" required />
+              <button type="button" class="btn btn-danger btn-sm remove-row">❌</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-stop">➕ Add Stop</button>
+          
+          <div class="text-end mt-4">
+            <button type="submit" class="btn btn-custom">💾 Save</button>
+            <a href="{% url 'route' %}" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header text-center">📋 All Routes</div>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Route Name</th>
+              <th>Stops & Timings</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for route in routes %}
+            <tr>
+              <td>{{ route.id }}</td>
+              <td>{{ route.name }}</td>
+              <td>
+                <ul class="list-group">
+                  {% for stop, time in route.get_stops_with_timings %}
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span>🚏 {{ stop }}</span>
+                    <span>🕒 {{ time }}</span>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </td>
+              <td>
+                
+                <button type="button" class="btn btn-sm btn-warning edit-route"
+     data-id="{{ route.id }}"
+     data-name="{{ route.name }}"
+     data-stops='{{ route.stops|safe }}'
+     data-timings='{{ route.timings|safe }}'>
+     ✏️ Edit
+</button>
+
+
+                <form method="POST" action="{% url 'route' %}?delete={{ route.id }}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted">No routes found!</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+ 
+  document.querySelectorAll('.edit-route').forEach(button => {
+    button.addEventListener('click', function () {
+        let routeId = this.getAttribute('data-id');
+        let routeName = this.getAttribute('data-name');
+        let stops = JSON.parse(this.getAttribute('data-stops'));
+        let timings = JSON.parse(this.getAttribute('data-timings'));
+
+        document.getElementById("route_id").value = routeId; // Set route ID in form
+        document.querySelector("input[name='name']").value = routeName;
+
+        let stopContainer = document.getElementById('stop-timing-list');
+        stopContainer.innerHTML = '';
+
+        stops.forEach((stop, index) => {
+            let row = document.createElement('div');
+            row.className = 'stop-row mb-2';
+            row.innerHTML = `
+                <input type="text" name="stops" class="form-control w-50" value="${stop.trim()}" required />
+                <input type="text" name="timings" class="form-control w-25" value="${timings[index] ? timings[index].trim() : ''}" required />
+                <button type="button" class="btn btn-danger btn-sm remove-row">❌</button>`;
+            stopContainer.appendChild(row);
+        });
+
+        document.querySelector(".card-body").scrollIntoView({ behavior: "smooth" });
+    });
+});
+
+</script>
+  <script>
+    document.getElementById('add-stop').addEventListener('click', function () {
+      const container = document.getElementById('stop-timing-list');
+      const row = document.createElement('div');
+      row.className = 'stop-row mb-2';
+      row.innerHTML = `
+        <input type="text" name="stops" class="form-control w-50" placeholder="Stop Name" required />
+        <input type="text" name="timings" class="form-control w-25" placeholder="Time" required />
+        <button type="button" class="btn btn-danger btn-sm remove-row">❌</button>`;
+      container.appendChild(row);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('remove-row')) {
+        e.target.closest('.stop-row').remove();
+      }
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>   {% endcomment %}
+
+{% comment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Routes</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script>
+        {% comment %} function addStopTimingRow(stop = '', timing = '') {
+            let container = document.getElementById('stops-timings-container');
+            let div = document.createElement('div');
+            div.classList.add('row', 'mb-2');
+
+            div.innerHTML = `
+                <div class="col">
+                    <input type="text" class="form-control" name="stops[]" placeholder="Stop name" value="${stop}" required>
+                </div>
+                <div class="col">
+                    <input type="text" class="form-control" name="timings[]" placeholder="Timing" value="${timing}" required>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-danger" onclick="this.parentElement.parentElement.remove()">Remove</button>
+                </div>
+            `;
+
+            container.appendChild(div);
+        } {% endcomment %}
+         
+        {% comment %} function addStopTimingRow() {
+          let container = document.getElementById("stops-timings-container");
+
+          let rowDiv = document.createElement("div");
+          rowDiv.className = "row mb-2";
+
+          let stopDiv = document.createElement("div");
+          stopDiv.className = "col-md-6";
+          let stopInput = document.createElement("input");
+          stopInput.type = "text";
+          stopInput.className = "form-control";
+          stopInput.name = "stops[]";
+          stopInput.placeholder = "Enter Stop";
+          stopInput.required = true;
+
+          let timingDiv = document.createElement("div");
+          timingDiv.className = "col-md-4";
+          let timingInput = document.createElement("input");
+          timingInput.type = "time";
+          timingInput.className = "form-control";
+          timingInput.name = "timings[]";
+          timingInput.required = true;
+
+          let removeDiv = document.createElement("div");
+          removeDiv.className = "col-md-2 text-end";
+          let removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn btn-danger";
+          removeBtn.innerText = "Remove";
+          removeBtn.onclick = function() { container.removeChild(rowDiv); };
+
+          stopDiv.appendChild(stopInput);
+          timingDiv.appendChild(timingInput);
+          removeDiv.appendChild(removeBtn);
+
+          rowDiv.appendChild(stopDiv);
+          rowDiv.appendChild(timingDiv);
+          rowDiv.appendChild(removeDiv);
+
+          container.appendChild(rowDiv);
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+          addStopTimingRow(); // ✅ Adds one row by default
+      });
+
+        function editRoute(id, name, stops, timings) {
+            document.getElementById('route_id').value = id;
+            document.getElementById('name').value = name;
+            document.getElementById('stops-timings-container').innerHTML = '';
+
+            let stopsArray = JSON.parse(stops.replace(/&quot;/g,'"'));
+            let timingsArray = JSON.parse(timings.replace(/&quot;/g,'"'));
+
+            for (let i = 0; i < stopsArray.length; i++) {
+                addStopTimingRow(stopsArray[i], timingsArray[i]);
+            }
+
+            document.getElementById('submitBtn').innerText = "Update Route";
+        } {% endcomment %}
+        {% comment %} function addStopTimingRow(stop = "", timing = "") { 
+          let container = document.getElementById("stops-timings-container");
+
+          let rowDiv = document.createElement("div");
+          rowDiv.className = "row mb-2";
+
+          let stopDiv = document.createElement("div");
+          stopDiv.className = "col-md-6";
+          let stopInput = document.createElement("input");
+          stopInput.type = "text";
+          stopInput.className = "form-control";
+          stopInput.name = "stops[]";
+          stopInput.placeholder = "Enter Stop";
+          stopInput.value = stop;
+          stopInput.required = true;
+
+          let timingDiv = document.createElement("div");
+          timingDiv.className = "col-md-4";
+          let timingInput = document.createElement("input");
+          timingInput.type = "time";
+          timingInput.className = "form-control";
+          timingInput.name = "timings[]";
+          timingInput.value = timing;
+          timingInput.required = true;
+
+          let removeDiv = document.createElement("div");
+          removeDiv.className = "col-md-2 text-end";
+          let removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn btn-danger";
+          removeBtn.innerText = "Remove";
+          removeBtn.onclick = function() { container.removeChild(rowDiv); };
+
+          stopDiv.appendChild(stopInput);
+          timingDiv.appendChild(timingInput);
+          removeDiv.appendChild(removeBtn);
+
+          rowDiv.appendChild(stopDiv);
+          rowDiv.appendChild(timingDiv);
+          rowDiv.appendChild(removeDiv);
+
+          container.appendChild(rowDiv);
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+          let stops = JSON.parse('{{ route.stops|escapejs }}');
+          let timings = JSON.parse('{{ route.timings|escapejs }}');
+
+          if (stops.length > 0) {
+              for (let i = 0; i < stops.length; i++) {
+                  addStopTimingRow(stops[i], timings[i]);
+              }
+          } else {
+              addStopTimingRow(); // ✅ Add one empty row if no data
+          }
+      });
+      function editRoute(id, name, stops, timings) {
+        document.getElementById('route_id').value = id;
+        document.getElementById('name').value = name;
+        document.getElementById('stops-timings-container').innerHTML = '';
+
+        let stopsArray = JSON.parse(stops.replace(/&quot;/g,'"'));
+        let timingsArray = JSON.parse(timings.replace(/&quot;/g,'"'));
+
+        for (let i = 0; i < stopsArray.length; i++) {
+            addStopTimingRow(stopsArray[i], timingsArray[i]);
+        }
+
+        document.getElementById('submitBtn').innerText = "Update Route";
+    }
+        function clearForm() {
+            document.getElementById('route_id').value = "";
+            document.getElementById('name').value = "";
+            document.getElementById('stops-timings-container').innerHTML = "";
+            document.getElementById('submitBtn').innerText = "Add Route";
+        }
+    </script>
+
+</head>
+<body class="bg-light">
+
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Manage Routes</h2>
+
+        <!-- Route Form -->
+        <div class="card shadow p-4">
+            <h4 class="mb-3 text-center">Add / Edit Route</h4>
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="route_id" id="route_id">
+
+                <div class="mb-3">
+                    <label class="form-label">Route Name:</label>
+                    <input type="text" class="form-control" name="name" id="name" required>
+                </div>
+
+                {% comment %} <div class="mb-3">
+                    <label class="form-label">Stops & Timings:</label>
+                    <div id="stops-timings-container"></div>
+                    <button type="button" class="btn btn-success mt-2" onclick="addStopTimingRow()">Add Stop</button>
+                </div> {% endcomment %}
+                
+                {% comment %} <div class="mb-3">
+                  <label class="form-label">Stops & Timings:</label>
+                  <div id="stops-timings-container"></div>
+                  <button type="button" class="btn btn-success mt-2" onclick="addStopTimingRow()">Add Stop</button>
+              </div>
+  
+                <button type="submit" class="btn btn-primary w-100" id="submitBtn">Add Route</button>
+                <button type="button" class="btn btn-secondary w-100 mt-2" onclick="clearForm()">Reset</button>
+            </form>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Route List Table -->
+        <h3 class="text-center mb-3">Route List</h3>
+        <div class="card shadow p-4">
+            <table class="table table-bordered table-striped text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Stops & Timings</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for route in routes %}
+                    <tr>
+                        <td>{{ route.name }}</td>
+                        <td>
+                            {% for stop, timing in route.get_stops_with_timings %}
+                                <strong>{{ stop }}</strong>: {{ timing }}<br>
+                            {% endfor %}
+                        </td>
+                        <td>
+                           
+                            <button class="btn btn-sm btn-warning" 
+    onclick="editRoute('{{ route.id }}', '{{ route.name }}', '{{ route.stops|escapejs }}', '{{ route.timings|escapejs }}')">
+    Edit
+</button>
+                            <a href="?delete={{ route.id }}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure you want to delete this route?');">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>
+  {% endcomment %}
+
+
+{% comment %}  
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Routes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+    <h2 class="mb-4">Manage Routes</h2>
+
+    <!-- Error Message -->
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <!-- Add/Edit Route Form -->
+    <form method="post" class="card p-4 shadow-sm">
+        {% csrf_token %}
+        
+        <input type="hidden" name="route_id" value="{{ route.id|default:'' }}">
+        <div class="mb-3">
+            <label class="form-label">Route Name</label>
+            <input type="text" name="name" class="form-control" value="{{ route.name|default:'' }}" required>
+        </div>
+        
+        <div id="stops-container">
+            <label class="form-label">Stops & Timings</label>
+            {% if route and route.get_stops_with_timings %}
+                {% for stop, timing in route.get_stops_with_timings %}
+                <div class="input-group mb-2">
+                    <input type="text" name="stops" class="form-control" placeholder="Stop" value="{{ stop }}" required>
+                    <input type="time" name="timings" class="form-control" value="{{ timing }}" required>
+                    <button type="button" class="btn btn-danger remove-stop">✖</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="input-group mb-2">
+                    <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                    <input type="time" name="timings" class="form-control" required>
+                    <button type="button" class="btn btn-danger remove-stop">✖</button>
+                </div>
+            {% endif %}
+        </div>
+        
+        <button type="button" class="btn btn-secondary mt-2" id="add-stop">+ Add Stop</button>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Save Route</button>
+            <a href="{% url 'manage_routes' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+
+    <!-- Routes Table -->
+    <div class="mt-4">
+        <h4>Existing Routes</h4>
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Route Name</th>
+                    <th>Stops & Timings</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for route in routes %}
+                <tr>
+                    <td>{{ route.name }}</td>
+                    <td>
+                        {% for stop, timing in route.get_stops_with_timings %}
+                            <div>{{ stop }} - {{ timing }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <a href="?edit={{ route.id }}" class="btn btn-warning btn-sm">✏ Edit</a>
+                        {% comment %} <a href="?delete={{ route.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this route?')">🗑 Delete</a>
+                    </td> 
+                    <a href="?delete={{ route.id }}" class="btn btn-danger btn-sm" 
+   onclick="return confirm('Are you sure you want to delete this route?')">
+    🗑 Delete
+</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center">No routes found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- jQuery for Adding/Removing Stops -->
+<script>
+    $(document).ready(function () {
+        $("#add-stop").click(function () {
+            $("#stops-container").append(`
+                <div class="input-group mb-2">
+                    <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                    <input type="time" name="timings" class="form-control" required>
+                    <button type="button" class="btn btn-danger remove-stop">✖</button>
+                </div>
+            `);
+        });
+
+        $(document).on("click", ".remove-stop", function () {
+            $(this).closest(".input-group").remove();
+        });
+    });
+</script>
+
+</body>
+</html>
+ {% endcomment %}
+ {% comment %} <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Manage Routes</title>
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+     <style>
+         :root {
+             --primary-blue: #1e40af; /* Dark Blue */
+             --accent-gold: #fbbf24; /* Gold Accent */
+             --light-gray: #f3f4f6; /* Light Gray */
+             --dark-text: #1f2937; /* Dark Text */
+             --accent-orange: #f59e0b;
+         
+         }
+         
+         body {
+             font-family: 'Segoe UI', sans-serif;
+             background-color: var(--light-gray);
+         }
+         
+         /* Navbar */
+         .admin-navbar {
+             background: white;
+             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+             border-bottom: 3px solid var(--primary-blue);
+         }
+         
+         .admin-navbar .navbar-brand {
+             font-weight: 700;
+             color: var(--primary-blue);
+             display: flex;
+             align-items: center;
+             gap: 10px;
+         }
+         
+         /* Main Container */
+         .bus-container {
+             max-width: 1200px;
+             margin: 30px auto;
+             padding: 0 20px;
+         }
+         
+         /* Form Card */
+         .form-card {
+             background: white;
+             border-radius: 10px;
+             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+             border-top: 3px solid var(--accent-gold);
+         }
+         
+        
+         /* Buttons */
+        .btn-bus-primary {
+            background-color: var(--primary-blue);
+            border: none;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .btn-bus-primary:hover {
+            background-color: #1e3a8a; /* Slightly darker blue */
+        }
+         
+         /* Table Styling */
+         .bus-table th {
+             background-color: var(--primary-blue);
+             color: white;
+         }
+         
+         .bus-table tr:hover {
+             background-color: rgba(29, 78, 216, 0.05);
+         }
+         
+         /* Form Elements */
+         .form-control:focus {
+             border-color: var(--primary-blue);
+             box-shadow: 0 0 0 0.2rem rgba(29,78,216,0.1);
+         }
+ 
+         /* Custom button styling for remove stop */
+         .btn-danger {
+             background-color: #e3342f;
+             border: none;
+         }
+ 
+         .btn-danger:hover {
+             background-color: #cc1f1a;
+         }
+     </style>
+ </head>
+ <body class="bg-light">
+ 
+ <!-- Navbar -->
+ <nav class="navbar navbar-expand-lg navbar-light admin-navbar sticky-top">
+     <div class="container">
+         <a class="navbar-brand" href="#">
+             <i class="fas fa-bus"></i>
+             <span>AGC Bus Admin</span>
+         </a>
+         <div class="d-flex align-items-center">
+             <a href="{% url 'admin_dashboard' %}" class="btn btn-sm btn-outline-secondary me-2">
+                 <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+             </a>
+             <a href="#" class="btn btn-sm btn-outline-danger">
+                 <i class="fas fa-sign-out-alt"></i> Logout
+             </a>
+         </div>
+     </div>
+ </nav>
+ 
+ <!-- Main Content -->
+ <div class="bus-container">
+     <h2 class="mb-4"><i class="fas fa-route me-2"></i>Manage Routes</h2>
+ 
+     <!-- Error Message -->
+     {% if error %}
+     <div class="alert alert-danger">{{ error }}</div>
+     {% endif %}
+ 
+     <!-- Add/Edit Route Form -->
+     <form method="post" class="card form-card p-4 shadow-sm">
+         {% csrf_token %}
+         <input type="hidden" name="route_id" value="{{ route.id|default:'' }}">
+         
+         <div class="mb-3">
+             <label class="form-label">Route Name</label>
+             <input type="text" name="name" class="form-control" value="{{ route.name|default:'' }}" required>
+         </div>
+         
+         <div id="stops-container">
+             <label class="form-label">Stops & Timings</label>
+             {% if route and route.get_stops_with_timings %}
+                 {% for stop, timing in route.get_stops_with_timings %}
+                 <div class="input-group mb-2">
+                     <input type="text" name="stops" class="form-control" placeholder="Stop" value="{{ stop }}" required>
+                     <input type="time" name="timings" class="form-control" value="{{ timing }}" required>
+                     <button type="button" class="btn btn-danger remove-stop">✖</button>
+                 </div>
+                 {% endfor %}
+             {% else %}
+                 <div class="input-group mb-2">
+                     <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                     <input type="time" name="timings" class="form-control" required>
+                     <button type="button" class="btn btn-danger remove-stop">✖</button>
+                 </div>
+             {% endif %}
+         </div>
+         
+         <button type="button" class="btn btn-secondary mt-2" id="add-stop">+ Add Stop</button>
+ 
+         <div class="mt-3">
+             <button type="submit" class="btn btn-bus-primary">Save Route</button>
+             <a href="{% url 'manage_routes' %}" class="btn btn-outline-secondary">Cancel</a>
+         </div>
+     </form>
+ 
+     <!-- Routes Table -->
+     <div class="mt-4">
+         <h4>Existing Routes</h4>
+         <div class="card table-card p-4">
+             <table class="table bus-table table-hover">
+                 <thead>
+                     <tr>
+                         <th>Route Name</th>
+                         <th>Stops & Timings</th>
+                         <th>Actions</th>
+                     </tr>
+                 </thead>
+                 <tbody>
+                     {% for route in routes %}
+                     <tr>
+                         <td>{{ route.name }}</td>
+                         <td>
+                             {% for stop, timing in route.get_stops_with_timings %}
+                                 <div>{{ stop }} - {{ timing }}</div>
+                             {% endfor %}
+                         </td>
+                         <td>
+                             <a href="?edit={{ route.id }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                             <a href="?delete={{ route.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this route?')"> Delete</a>
+                         </td>
+                     </tr>
+                     {% empty %}
+                     <tr>
+                         <td colspan="3" class="text-center">No routes found.</td>
+                     </tr>
+                     {% endfor %}
+                 </tbody>
+             </table>
+         </div>
+     </div>
+ </div>
+ 
+ <!-- jQuery for Adding/Removing Stops -->
+ <script>
+     $(document).ready(function () {
+         $("#add-stop").click(function () {
+             $("#stops-container").append(`
+                 <div class="input-group mb-2">
+                     <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                     <input type="time" name="timings" class="form-control" required>
+                     <button type="button" class="btn btn-danger remove-stop">✖</button>
+                 </div>
+             `);
+         });
+ 
+         $(document).on("click", ".remove-stop", function () {
+             $(this).closest(".input-group").remove();
+         });
+     });
+ </script>
+ 
+ </body>
+ </html>
+  {% endcomment %}
+{% comment %} 
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Routes | AGC Bus Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1e40af; /* Dark Blue */
+            --accent-gold: #fbbf24; /* Gold Accent */
+            --light-gray: #f8fafc; /* Light Gray */
+            --dark-text: #1f2937; /* Dark Text */
+            --accent-orange: #f59e0b;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+            --nav-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--dark-text);
+            min-height: 100vh;
+        }
+        
+        /* Navbar Styling */
+        .admin-navbar {
+            background: var(--nav-gradient);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-navbar.scrolled {
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: translateX(5px);
+        }
+        
+        .navbar-brand i {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: var(--accent-gold);
+            border-radius: 3px;
+        }
+        
+        .btn-nav {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-nav:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger-red) !important;
+        }
+        
+        .btn-logout:hover {
+            background: var(--danger-red) !important;
+        }
+        
+        /* Main Container */
+        .bus-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Cards */
+        .form-card, .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: none;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-card {
+            border-top: 4px solid var(--accent-gold);
+        }
+        
+        .table-card {
+            border-top: 4px solid var(--primary-blue);
+        }
+        
+        .form-card:hover, .table-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Buttons */
+        .btn-bus-primary {
+            background-color: var(--primary-blue);
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(30, 64, 175, 0.2);
+        }
+        
+        .btn-bus-primary:hover {
+            background-color: #1e3a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-secondary {
+            border-color: #d1d5db;
+            color: #4b5563;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        
+        /* Table Styling */
+        .bus-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .bus-table th {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+        }
+        
+        .bus-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        
+        .bus-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .bus-table tr:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .action-btn {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-edit {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary-blue);
+        }
+        
+        .btn-edit:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--primary-blue);
+        }
+        
+        .btn-delete {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger-red);
+        }
+        
+        .btn-delete:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+        }
+        
+        /* Form Elements */
+        .form-control, .form-select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Stop Input Groups */
+        .input-group {
+            transition: all 0.3s ease;
+        }
+        
+        .input-group:hover {
+            transform: translateX(3px);
+        }
+        
+        .remove-stop {
+            transition: all 0.2s ease;
+        }
+        
+        .remove-stop:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .animate-slide {
+            animation: slideIn 0.4s ease-out forwards;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .nav-link {
+                padding: 0.5rem !important;
+                margin: 0.2rem 0;
+            }
+            
+            .bus-container {
+                padding: 0 15px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group .form-control {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .input-group .btn {
+                width: 100%;
+            }
+        }
+        
+        /* Floating action button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(30, 64, 175, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0); }
+        }
+        
+        /* Stop list styling */
+        .stop-item {
+            background: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .stop-item:hover {
+            transform: translateX(3px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bus"></i>
+                <span>AGC Bus Admin</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_buses' %}">
+                            <i class="fas fa-bus me-1"></i> Buses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_drivers' %}">
+                            <i class="fas fa-id-badge me-1"></i> Drivers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'manage_routes' %}">
+                            <i class="fas fa-route me-1"></i> Routes
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-sm btn-nav btn-logout" href="{% url 'admin_logout' %}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="bus-container">
+        <div class="d-flex justify-content-between align-items-center mb-4 animate-slide">
+            <h2 class="mb-0"><i class="fas fa-route me-2 text-primary"></i>Manage Routes</h2>
+            <div>
+                <a href="{% url 'manage_routes' %}" class="btn btn-sm btn-bus-primary">
+                    <i class="fas fa-plus me-1"></i>New Route
+                </a>
+            </div>
+        </div>
+        
+        <!-- Error Message -->
+        {% if error %}
+        <div class="alert alert-danger animate-slide">{{ error }}</div>
+        {% endif %}
+
+        <!-- Add/Edit Route Form -->
+        <div class="card form-card p-4 mb-4">
+            <h5 class="mb-3"><i class="fas fa-edit me-2 text-warning"></i>Route Information</h5>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="route_id" value="{{ route.id|default:'' }}">
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Route Name</label>
+                    <input type="text" name="name" class="form-control" value="{{ route.name|default:'' }}" required>
+                </div>
+                
+                <div id="stops-container">
+                    <label class="form-label fw-semibold">Stops & Timings</label>
+                    {% if route and route.get_stops_with_timings %}
+                        {% for stop, timing in route.get_stops_with_timings %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" value="{{ stop }}" required>
+                            <input type="time" name="timings" class="form-control" value="{{ timing }}" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                            <input type="time" name="timings" class="form-control" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <button type="button" class="btn btn-outline-secondary mt-2" id="add-stop">
+                    <i class="fas fa-plus me-1"></i>Add Stop
+                </button>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a href="{% url 'manage_routes' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-bus-primary">
+                        <i class="fas fa-save me-1"></i>Save Route
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Routes Table -->
+        <div class="card table-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Existing Routes</h5>
+               
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table bus-table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Route Name</th>
+                            <th>Stops & Timings</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for route in routes %}
+                        <tr>
+                            <td class="fw-semibold">{{ route.name }}</td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    {% for stop, timing in route.get_stops_with_timings %}
+                                    <div class="stop-item">
+                                        <span class="fw-medium">{{ stop }}</span> - <span class="text-muted">{{ timing }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="?edit={{ route.id }}" class="btn btn-sm action-btn btn-edit">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="?delete={{ route.id }}" class="btn btn-sm action-btn btn-delete" 
+                                       onclick="return confirm('Are you sure you want to delete this route?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4">No routes found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.admin-navbar');
+            if (window.scrollY > 10) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Add/Remove stops functionality
+        $(document).ready(function () {
+            $("#add-stop").click(function () {
+                $("#stops-container").append(`
+                    <div class="input-group mb-2">
+                        <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                        <input type="time" name="timings" class="form-control" required>
+                        <button type="button" class="btn btn-danger remove-stop">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `);
+            });
+
+            $(document).on("click", ".remove-stop", function () {
+                if ($("#stops-container .input-group").length > 1) {
+                    $(this).closest(".input-group").remove();
+                } else {
+                    alert("At least one stop is required.");
+                }
+            });
+        });
+    </script>
+</body>
+ </html> {% endcomment %}
+
+
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Routes | AGC Bus Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1e40af; /* Dark Blue */
+            --accent-gold: #fbbf24; /* Gold Accent */
+            --light-gray: #f8fafc; /* Light Gray */
+            --dark-text: #1f2937; /* Dark Text */
+            --accent-orange: #f59e0b;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+            --nav-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--dark-text);
+            min-height: 100vh;
+        }
+        
+        /* Navbar Styling */
+        .admin-navbar {
+            background: var(--nav-gradient);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-navbar.scrolled {
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: translateX(5px);
+        }
+        
+        .navbar-brand i {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: var(--accent-gold);
+            border-radius: 3px;
+        }
+        
+        .btn-nav {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-nav:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger-red) !important;
+        }
+        
+        .btn-logout:hover {
+            background: var(--danger-red) !important;
+        }
+        
+        /* Main Container */
+        .bus-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Cards */
+        .form-card, .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: none;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-card {
+            border-top: 4px solid var(--accent-gold);
+        }
+        
+        .table-card {
+            border-top: 4px solid var(--primary-blue);
+        }
+        
+        .form-card:hover, .table-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Buttons */
+        .btn-bus-primary {
+            background-color: var(--primary-blue);
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(30, 64, 175, 0.2);
+        }
+        
+        .btn-bus-primary:hover {
+            background-color: #1e3a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-secondary {
+            border-color: #d1d5db;
+            color: #4b5563;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        
+        /* Table Styling */
+        .bus-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .bus-table th {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+        }
+        
+        .bus-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+        
+        .bus-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .bus-table tr:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .action-btn {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-edit {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary-blue);
+        }
+        
+        .btn-edit:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--primary-blue);
+        }
+        
+        .btn-delete {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger-red);
+        }
+        
+        .btn-delete:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+        }
+        
+        /* Form Elements */
+        .form-control, .form-select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Stop Input Groups */
+        .input-group {
+            transition: all 0.3s ease;
+        }
+        
+        .input-group:hover {
+            transform: translateX(3px);
+        }
+        
+        .remove-stop {
+            transition: all 0.2s ease;
+        }
+        
+        .remove-stop:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Coordinate input styling */
+        .coordinate-input {
+            max-width: 150px;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .animate-slide {
+            animation: slideIn 0.4s ease-out forwards;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .nav-link {
+                padding: 0.5rem !important;
+                margin: 0.2rem 0;
+            }
+            
+            .bus-container {
+                padding: 0 15px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group .form-control {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .input-group .btn {
+                width: 100%;
+            }
+            
+            .coordinate-input {
+                max-width: 100%;
+            }
+        }
+        
+        /* Floating action button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(30, 64, 175, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(30, 64, 175, 0); }
+        }
+        
+        /* Stop list styling */
+        .stop-item {
+            background: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .stop-item:hover {
+            transform: translateX(3px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* Coordinate badge styling */
+        .coordinate-badge {
+            font-family: monospace;
+            background-color: #f3f4f6;
+            color: #4b5563;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark admin-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bus"></i>
+                <span>AGC Bus Admin</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_buses' %}">
+                            <i class="fas fa-bus me-1"></i> Buses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_drivers' %}">
+                            <i class="fas fa-id-badge me-1"></i> Drivers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'manage_routes' %}">
+                            <i class="fas fa-route me-1"></i> Routes
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-sm btn-nav btn-logout" href="{% url 'admin_logout' %}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="bus-container">
+        <div class="d-flex justify-content-between align-items-center mb-4 animate-slide">
+            <h2 class="mb-0"><i class="fas fa-route me-2 text-primary"></i>Manage Routes</h2>
+            <div>
+                <a href="{% url 'manage_routes' %}" class="btn btn-sm btn-bus-primary">
+                    <i class="fas fa-plus me-1"></i>New Route
+                </a>
+            </div>
+        </div>
+        
+        <!-- Error Message -->
+        {% if error %}
+        <div class="alert alert-danger animate-slide">{{ error }}</div>
+        {% endif %}
+
+        <!-- Add/Edit Route Form -->
+        <div class="card form-card p-4 mb-4">
+            <h5 class="mb-3"><i class="fas fa-edit me-2 text-warning"></i>Route Information</h5>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="route_id" value="{{ route.id|default:'' }}">
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Route Name</label>
+                        <input type="text" name="name" class="form-control" value="{{ route.name|default:'' }}" required>
+                    </div>
+                </div>
+                
+                {% comment %} <div id="stops-container"> 
+                    <label class="form-label fw-semibold">Stops,Timings, Latitudes & Longitudes</label>
+                    {% if route and route.get_stops_with_timings %}
+                        {% for stop, timing in route.get_stops_with_timings %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" value="{{ stop }}" required>
+                            <input type="time" name="timings" class="form-control" value="{{ timing }}" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                            <input type="time" name="timings" class="form-control" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endif %}
+                 </div> {% endcomment %}
+                
+                 {% comment %} <div id="stops-container">
+                    <label class="form-label fw-semibold">Stops, Timings, Latitudes & Longitudes</label>
+                    {% if route and route.get_stops_with_timings %}
+                        {% for stop, timing, lat, lng in route.get_stops_with_timings %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" value="{{ stop }}" required>
+                            <input type="time" name="timings" class="form-control" value="{{ timing }}" required>
+                            <input type="number" step="0.000001" name="latitude" class="form-control" placeholder="Latitude" required>
+                            <input type="number" step="0.000001" name="longitude" class="form-control" placeholder="Longitude" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                            <input type="time" name="timings" class="form-control" required>
+                            <input type="number" step="0.000001" name="latitude" class="form-control" placeholder="Latitude" required>
+                            <input type="number" step="0.000001" name="longitude" class="form-control" placeholder="Longitude" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endif %}
+                </div> {% endcomment %}
+                <div id="stops-container">
+                    <label class="form-label fw-semibold">Stops, Timings, Latitudes & Longitudes</label>
+                    {% if route and route.get_stops_with_timings %}
+                        {% for stop, timing, lat, lng in route.get_stops_with_timings %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" value="{{ stop }}" required>
+                            <input type="time" name="timings" class="form-control" value="{{ timing }}" required>
+                            <input type="number" step="0.000001" name="latitudes" class="form-control" placeholder="Latitude" value="{{ lat }}" required>
+                            <input type="number" step="0.000001" name="longitudes" class="form-control" placeholder="Longitude" value="{{ lng }}" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                            <input type="time" name="timings" class="form-control" required>
+                            <input type="number" step="0.000001" name="latitudes" class="form-control" placeholder="Latitude" required>
+                            <input type="number" step="0.000001" name="longitudes" class="form-control" placeholder="Longitude" required>
+                            <button type="button" class="btn btn-danger remove-stop">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <button type="button" class="btn btn-outline-secondary mt-2" id="add-stop">
+                    <i class="fas fa-plus me-1"></i>Add Stop
+                </button>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a href="{% url 'manage_routes' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-bus-primary">
+                        <i class="fas fa-save me-1"></i>Save Route
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Routes Table -->
+        <div class="card table-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Existing Routes</h5>
+                {% comment %} <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text bg-transparent"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search routes...">
+                </div> {% endcomment %}
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table bus-table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Route Name</th>
+                            <th>Stops & Timings</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for route in routes %}
+                        <tr>
+                            <td class="fw-semibold">{{ route.name }}</td>
+                            {% comment %} <td>
+                                {% if route.latitude and route.longitude %}
+                                    <span class="coordinate-badge">Lat: {{ route.latitude|floatformat:6 }}</span>
+                                    <span class="coordinate-badge">Lng: {{ route.longitude|floatformat:6 }}</span>
+                                {% else %}
+                                    <span class="text-muted">Not set</span>
+                                {% endif %}
+                            </td> {% endcomment %}
+                            {% comment %} <td>
+                                <div class="d-flex flex-column gap-1">
+                                    {% for stop, timing in route.get_stops_with_timings %}
+                                    <div class="stop-item">
+                                        <span class="fw-medium">{{ stop }}</span> - <span class="text-muted">{{ timing }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td> {% endcomment %}
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    {% for stop, timing, lat, lng in route.get_stops_with_timings %}
+                                    <div class="stop-item">
+                                        <span class="fw-medium">{{ stop }}</span> - 
+                                        <span class="text-muted">{{ timing }}</span> -
+                                        <span class="text-muted">Lat: {{ lat|floatformat:6 }}</span> -
+                                        <span class="text-muted">Lng: {{ lng|floatformat:6 }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="?edit={{ route.id }}" class="btn btn-sm action-btn btn-edit">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="?delete={{ route.id }}" class="btn btn-sm action-btn btn-delete" 
+                                       onclick="return confirm('Are you sure you want to delete this route?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">No routes found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.admin-navbar');
+            if (window.scrollY > 10) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Add/Remove stops functionality
+        $(document).ready(function () {
+            $("#add-stop").click(function () {
+                $("#stops-container").append(`
+                    <div class="input-group mb-2">
+                        <input type="text" name="stops" class="form-control" placeholder="Stop" required>
+                        <input type="time" name="timings" class="form-control" required>
+                        <input type="number" name="latitudes" class="form-control" placeholder="Latitude" required>
+                        <input type="number" name="longitudes" class="form-control" placeholder="Longitude" required>
+                        <button type="button" class="btn btn-danger remove-stop">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                    </div>
+                `);
+            });
+
+            $(document).on("click", ".remove-stop", function () {
+                if ($("#stops-container .input-group").length > 1) {
+                    $(this).closest(".input-group").remove();
+                } else {
+                    alert("At least one stop is required.");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

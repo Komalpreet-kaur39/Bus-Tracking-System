@@ -1,0 +1,358 @@
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Tracking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: url('https://source.unsplash.com/1600x900/?bus,road') no-repeat center center/cover;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 30px;
+        }
+        .navbar .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .navbar .links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 18px;
+        }
+        .navbar .links a:hover {
+            text-decoration: underline;
+        }
+        .content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .content h1 {
+            font-size: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">AGC</div>
+        <div class="links">
+           
+            <a href="/custom-admin/login/">Admin</a>
+
+            <a href="{% url 'student_login' %}">Student</a>
+        </div>
+    </div>
+    <div class="content">
+        <h1>Welcome to the AGC Bus Tracking System</h1>
+    </div>
+</body>
+</html> {% endcomment %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGC Bus Tracking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        
+        /* Blue Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background-color: #1d4ed8;
+            color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        
+        .nav-items {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .home-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        
+        .home-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Login Buttons */
+        .login-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-decoration: none; /* Added for link buttons */
+        }
+        
+        .btn-admin {
+            background-color: #dc2626;
+            color: white;
+        }
+        
+        .btn-admin:hover {
+            background-color: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+        }
+        
+        .btn-student {
+            background-color: #f59e0b;
+            color: #1e293b;
+        }
+        
+        .btn-student:hover {
+            background-color: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+        }
+        
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            overflow: hidden;
+            padding-top: 60px;
+            background: url("{% static 'images/college.jpeg' %}") no-repeat center center/cover;
+            background-position: center;
+            background-size: cover;
+            {% comment %} margin-top: 60px; /* To account for fixed navbar */ {% endcomment %}
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
+            z-index: 1;
+        }
+        
+        .hero-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease 0.3s forwards;
+            opacity: 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #f59e0b;
+            color: #1e293b;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            animation: fadeInUp 1s ease 0.6s forwards;
+            opacity: 0;
+        }
+        
+        .cta-button:hover {
+            background-color: #d97706;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 12px 5%;
+            }
+            
+            .logo-text {
+                font-size: 18px;
+            }
+            
+            .nav-items {
+                gap: 15px;
+            }
+            
+            .login-buttons {
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Blue Navbar with colored buttons -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-bus logo-icon"></i>
+            <span class="logo-text">AGC Bus Tracking</span>
+        </div>
+        
+        <div class="nav-items">
+            <a href="#home" class="home-link">Home</a>
+            
+            <div class="login-buttons">
+                <a href="/custom-admin/login/" class="btn btn-admin">
+                    <i class="fas fa-user-shield"></i>
+                    Admin
+                </a>
+                <a href="/student/login/" class="btn btn-student">
+                    <i class="fas fa-user-graduate"></i>
+                    Student
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section with College Image -->
+    <section class="hero" id="home">
+        {% comment %} <img src="C:/Users/Maninder Singh/Downloads/collge.jpeg" alt="College Campus" class="hero-image"> {% endcomment %}
+        
+        <div class="hero-content">
+            <h1 class="hero-title">Welcome to Amritsar Group of Colleges</h1>
+            <p class="hero-subtitle">Track your campus buses in real-time and never miss your ride again</p>
+            <a href="/student/login/" class="cta-button">Get Started <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </section>
+
+    <!-- You would add more sections here -->
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

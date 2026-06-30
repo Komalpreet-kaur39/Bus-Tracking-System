@@ -1,0 +1,519 @@
+ {% extends 'admin_dashboard.html' %} 
+ {% comment %}  
+
+{% block content %}
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="search-box">
+        <form method="GET" action="{% url 'admin_dashboard' %}">
+          <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Search by stop name..." value="{{ search_query }}">
+            <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i> Search</button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="bus-list">
+        {% if buses %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Bus Number</th>
+                <th>Route Name</th>
+                <th>Stops with Timings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bus in buses %}
+                <tr>
+                  <td>{{ bus.bus_number }}</td>
+                  <td>{{ bus.route.name }}</td>
+                  <td>
+                    {% for stop, timing, lat, lon in bus.route.get_stops_with_timings %}
+                      {% if stop|lower == search_query|lower %}
+                        <span>{{ stop }} - {{ timing }}</span><br>
+                      {% endif %}
+                    {% endfor %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>No buses found for the searched stop name.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %} {% endcomment %}
+
+
+{% comment %} {% extends 'base.html' %} {% endcomment %}
+{% comment %} 
+{% block title %}Bus Search{% endblock %}
+
+{% block content %}
+<h1>Search Buses by Stop</h1>
+
+<!-- Search Box -->
+
+<form method="GET" action="{% url 'search_bus' %}" class="d-flex ms-2">
+    <div class="input-group">
+    <input type="text" name="search" class="form-control form-control-sm" placeholder="Search stop..." value="{{ search_query }}">
+    <button class="btn btn-outline-light btn-sm ms-2" type="submit">
+      <i class="fas fa-search"></i> Search
+    </button>
+</div>
+  </form>
+
+<!-- Bus List Table -->
+<div class="table-responsive">
+    <table class="table bus-table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Bus Number</th>
+                <th>Route Name</th>
+                <th>Stops & Timings</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if buses %}
+                {% for bus in buses %}
+                    <tr>
+                        <td class="fw-semibold">{{ bus.bus_number }}</td>
+                        <td class="fw-semibold">{{ bus.route.name }}</td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                {% for stop in bus.route.get_stops_with_timings %}
+                                    {% if stop.stop|lower == search_query|lower %}
+                                        <div class="stop-item">
+                                            <span class="fw-medium">{{ stop.stop }}</span> - 
+                                            <span class="text-muted">{{ stop.timing }}</span>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3">No buses found for the searched stop name.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %} {% endcomment %}
+
+{% comment %} 
+{% block title %}Bus Search{% endblock %}
+
+{% block content %}
+<h1>Search Buses by Stop</h1>
+
+
+<form method="GET" action="{% url 'search_bus' %}" class="d-flex ms-2">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search stop..." value="{{ search_query }}">
+        <button class="btn btn-outline-light btn-sm ms-2" type="submit">
+            <i class="fas fa-search"></i> Search
+        </button>
+    </div>
+</form>
+
+<!-- Bus List Table -->
+<div class="table-responsive">
+    <table class="table bus-table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Bus Number</th>
+                <th>Route Name</th>
+                <th>Stops & Timings</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if buses %}
+                {% for bus in buses %}
+                    <tr>
+                        <td class="fw-semibold">{{ bus.bus_number }}</td>
+                        <td class="fw-semibold">{{ bus.route.name }}</td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                {% for stop in bus.route.get_stops_with_timings %}
+                                    {% if stop.stop|lower == search_query|lower %}
+                                        <div class="stop-item">
+                                            <span class="fw-medium">{{ stop.stop }}</span> - 
+                                            <span class="text-muted">{{ stop.timing }}</span>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3">No buses found for the searched stop name.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %} {% endcomment %}
+
+{% comment %}  
+{% extends 'base.html' %}
+
+{% block title %}Bus Search{% endblock %}
+
+{% block content %}
+<h1>Search Buses by Stop</h1>
+
+<!-- Search Box -->
+<form method="GET" action="{% url 'search_bus' %}" class="d-flex ms-2">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search stop..." value="{{ search_query }}">
+        <button class="btn btn-outline-light btn-sm ms-2" type="submit">
+            <i class="fas fa-search"></i> Search
+        </button>
+    </div>
+</form>
+
+<!-- Bus List Table -->
+<div class="table-responsive">
+    <table class="table bus-table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Bus Number</th>
+                <th>Route Name</th>
+                <th>Stops & Timings</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if buses %}
+                {% for bus in buses %}
+                    <tr>
+                        <td class="fw-semibold">{{ bus.bus_number }}</td>
+                        <td class="fw-semibold">{{ bus.route.name }}</td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                {% for stop, timing, lat, lng in bus.route.get_stops_with_timings %}
+                                    {% if stop|lower == search_query|lower %}
+                                        <div class="stop-item">
+                                            <span class="fw-medium">{{ stop }}</span> - 
+                                            <span class="text-muted">{{ timing }}</span> - 
+                                            <span class="text-muted">Lat: {{ lat|floatformat:6 }}</span> - 
+                                            <span class="text-muted">Lng: {{ lng|floatformat:6 }}</span>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3">No buses found for the searched stop name.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %} 
+
+ {% endcomment %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Search Bus</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Search Page Specific Styles */
+    .search-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    .search-header {
+        background: var(--nav-gradient);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .search-header h2 {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .search-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .search-form {
+        margin-bottom: 30px;
+    }
+    
+    .search-form .input-group {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .search-form input {
+        border-radius: 8px 0 0 8px !important;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+    
+    .search-form input::placeholder {
+        color: rgba(255,255,255,0.7);
+    }
+    
+    .search-form input:focus {
+        background: rgba(255,255,255,0.2);
+        border-color: var(--accent-gold);
+        box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+    }
+    
+    .search-form button {
+        border-radius: 0 8px 8px 0 !important;
+        background: var(--accent-gold);
+        color: var(--dark-text);
+        border: none;
+        font-weight: 500;
+    }
+    
+    .search-form button:hover {
+        background: #f59e0b;
+    }
+    
+    .bus-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    
+    .bus-table thead th {
+        background-color: var(--primary-blue) !important;
+        color: white !important;
+        padding: 1rem;
+        font-weight: 600;
+    }
+    
+    .bus-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .bus-table tbody tr:hover {
+        background-color: rgba(30, 64, 175, 0.05) !important;
+    }
+    
+    .bus-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .stop-item {
+        padding: 8px 12px;
+        background: rgba(30, 64, 175, 0.05);
+        border-radius: 6px;
+        margin-bottom: 5px;
+        transition: all 0.2s ease;
+    }
+    
+    .stop-item:hover {
+        background: rgba(30, 64, 175, 0.1);
+        transform: translateX(3px);
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 40px;
+        color: #6b7280;
+    }
+    
+    .no-results i {
+        font-size: 3rem;
+        color: #d1d5db;
+        margin-bottom: 15px;
+    }
+    
+    .highlight {
+        background-color: rgba(251, 191, 36, 0.3);
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+    
+    @media (max-width: 768px) {
+        .search-header {
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .search-form .input-group {
+            width: 100%;
+        }
+        
+        .bus-table td {
+            padding: 0.75rem;
+        }
+        
+        .stop-item {
+            font-size: 0.9rem;
+            padding: 6px 8px;
+        }
+    }
+</style>
+
+<body>
+  {% comment %} <!-- Navbar (same as your template) -->
+  <nav class="navbar navbar-expand-lg navbar-dark admin-navbar sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-bus"></i>
+        <span>AGC Bus Admin</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+          aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="adminNavbar">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                      <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'manage_buses' %}">
+                      <i class="fas fa-bus me-1"></i> Buses
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'manage_drivers' %}">
+                      <i class="fas fa-id-badge me-1"></i> Drivers
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'manage_routes' %}">
+                      <i class="fas fa-route me-1"></i> Routes
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link active" href="{% url 'search_bus' %}">
+                      <i class="fas fa-search me-1"></i> Search
+                  </a>
+              </li>
+              <li class="nav-item ms-lg-2">
+                  <a class="btn btn-sm btn-nav btn-logout" href="{% url 'admin_logout' %}">
+                      <i class="fas fa-sign-out-alt me-1"></i> Logout
+                  </a>
+              </li>
+          </ul>
+      </div>
+    </div>
+  </nav> {% endcomment %}
+
+  <!-- Search Content -->
+  <div class="search-container">
+    <div class="search-header">
+      <h2><i class="fas fa-search me-2"></i>Bus Stop Search</h2>
+      <p>Find buses that service a specific stop</p>
+    </div>
+    
+    <!-- Search Form -->
+    <form method="GET" action="{% url 'search_bus' %}" class="search-form">
+      <div class="input-group">
+          <input type="text" name="search" class="form-control" 
+                 placeholder="Enter stop name (e.g. 'Main Station')" 
+                 value="{{ search_query }}" required>
+          <button class="btn" type="submit">
+              <i class="fas fa-search me-2"></i>Search
+          </button>
+      </div>
+    </form>
+    
+    <!-- Results Section -->
+    {% if search_query %}
+    <div class="table-responsive">
+      <table class="table bus-table">
+        <thead>
+          <tr>
+            <th>Bus Number</th>
+            <th>Route Name</th>
+            <th>Stop Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if buses %}
+            {% for bus in buses %}
+              <tr>
+                <td class="fw-semibold">{{ bus.bus_number }}</td>
+                <td class="fw-semibold">{{ bus.route.name }}</td>
+                <td>
+                  <div class="d-flex flex-column gap-2">
+                    {% for stop, timing, lat, lng in bus.route.get_stops_with_timings %}
+                      {% if stop|lower == search_query|lower %}
+                        <div class="stop-item">
+                          <div class="d-flex justify-content-between flex-wrap">
+                            <span class="fw-medium">{{ stop }}</span>
+                            <span class="text-muted">{{ timing }}</span>
+                          </div>
+                          <div class="text-muted small mt-1">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            Coordinates: {{ lat|floatformat:6 }}, {{ lng|floatformat:6 }}
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="3">
+                <div class="no-results">
+                  <i class="fas fa-bus-slash"></i>
+                  <h4>No buses found</h4>
+                  <p>No buses serve the stop "{{ search_query }}"</p>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <div class="card bg-light border-0 p-5">
+        <i class="fas fa-search fa-4x mb-4 text-muted"></i>
+        <h3 class="mb-3">Search for Bus Stops</h3>
+        <p class="text-muted">Enter a stop name in the search box above to find buses that service that location</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html> 
+ 
