@@ -391,7 +391,7 @@
 
           
       function fetchBusLocation() {
-          fetch('http://192.168.173.91:8000/save_location/')  // Example API endpoint, replace with actual
+          fetch('{{ SAVE_LOCATION_URL }}')
               .then(response => response.json())
               .then(data => {
                   const busLocation = { lat: data.latitude, lng: data.longitude };
@@ -418,7 +418,7 @@
       }
     </script>
     <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJGkhfiacFw9EsXGM4QdKejnp5J3i8D4w&callback=initMap"
+      src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap"
       async
       defer
     ></script>
