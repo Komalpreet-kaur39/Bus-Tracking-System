@@ -208,9 +208,7 @@ Feel free to fork the repository and submit a pull request.
 
 **Komalpreet**
 
-GitHub: https://github.com/YOUR_USERNAME
-
-LinkedIn: https://linkedin.com/in/YOUR_LINKEDIN
+GitHub: https://github.com/Komalpreet-kaur39
 
 ---
 
