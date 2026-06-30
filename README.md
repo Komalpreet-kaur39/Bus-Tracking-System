@@ -99,29 +99,6 @@ Bus-Tracking-System/
 ├── manage.py
 └── requirements.txt
 ```
-
----
-
-## 📸 Screenshots
-
-### Admin Dashboard
-
-![Admin Dashboard](screenshots/admin-dashboard.png)
-
-### Student Dashboard
-
-![Student Dashboard](screenshots/student-dashboard.png)
-
-### Driver Dashboard
-
-![Driver Dashboard](screenshots/driver-dashboard.png)
-
-### Live Bus Tracking
-
-![Live Tracking](screenshots/live-map.png)
-
-> Add your screenshots inside a folder named `screenshots`.
-
 ---
 
 ## ⚙ Installation
